@@ -8,7 +8,7 @@ jobs:
   containers:
     runs-on: ubuntu-latest
     env:
-      PUSH_PACKAGES: ${{ github.repository_owner == 'connormanning' && github.event_name != 'pull_request' }}
+      PUSH_PACKAGES: ${{ github.repository_owner == 'cbardasano' && github.event_name != 'pull_request' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -53,8 +53,8 @@ jobs:
           file: ./scripts/docker/Dockerfile
           platforms: linux/amd64
           tags: |
-            docker.io/connormanning/entwine:${{ steps.prep.outputs.VERSION }}
-            ghcr.io/connormanning/entwine:${{ steps.prep.outputs.VERSION }}
+            docker.io/cbardai/entwine:${{ steps.prep.outputs.VERSION }}
+            ghcr.io/cbardasano/entwine:${{ steps.prep.outputs.VERSION }}
           labels: |
             org.opencontainers.image.title=${{ github.event.repository.name }}
             org.opencontainers.image.description=${{ github.event.repository.description }}

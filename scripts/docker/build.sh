@@ -1,7 +1,7 @@
 #!/bin/bash
 
-CONTAINER_NAME="connormanning/entwine"
-VERSION="3.1.1"
+CONTAINER_NAME="cbardai/entwine"
+VERSION="3.2.2"
 
 WIPE_CACHE="$1"
 if [ -z "$WIPE_CACHE" ]; then
