@@ -4,23 +4,39 @@ FROM --platform=$TARGETPLATFORM condaforge/mambaforge:latest as build
 ARG TARGETPLATFORM
 ARG TARGETARCH
 ARG TARGETVARIANT
-ARG BRANCH=master
 RUN printf "I'm building for TARGETPLATFORM=${TARGETPLATFORM}" \
     && printf ", TARGETARCH=${TARGETARCH}" \
     && printf ", TARGETVARIANT=${TARGETVARIANT} \n" \
     && printf "With uname -s : " && uname -s \
-    && printf "and  uname -m : " && uname -m \
-    && printf "and  branch: ${BRANCH}"
+    && printf "and  uname -m : " && uname -m
 
-
+# Install conda-pack in base environment
 RUN mamba install -c conda-forge conda-pack -y
-RUN mamba create -n entwine entwine -y
 
+# Create environment with build dependencies (NOT the entwine package itself)
+RUN mamba create -n entwine -c conda-forge \
+    libpdal-core compilers cmake ninja \
+    xz curl openssl -y
+
+ENV CONDA_ENV_NAME="entwine"
+ENV CONDAENV="/opt/conda/envs/${CONDA_ENV_NAME}"
+
+# Copy source code from the build context (the repository)
+COPY . /src
+
+# Build entwine from source
 SHELL ["conda", "run", "-n", "entwine", "/bin/bash", "-c"]
 
-ENV CONDA_ENV_NAME "entwine"
-ENV CONDAENV "/opt/conda/envs/${CONDA_ENV_NAME}"
+RUN cd /src && mkdir build && cd build && \
+    cmake .. \
+        -G Ninja \
+        -DCMAKE_PREFIX_PATH=${CONDAENV} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=${CONDAENV} \
+        -DWITH_TESTS=OFF && \
+    ninja install
 
+# Package the environment with conda-pack
 SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
 
 RUN conda-pack -n ${CONDA_ENV_NAME} --dest-prefix=/var/task -o /tmp/env.tar && \
