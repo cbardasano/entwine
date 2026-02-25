@@ -242,11 +242,28 @@ MaybePointlessFile getPointlessLasFile(
     is.seek(pointOffsetPos);
     is >> pointOffset;
 
-    // Grab the legacy point count, then set its value in the header to zero.
+    // Grab the legacy point count.
     is.seek(legacyPointCountPos);
     is >> legacyPointCount;
-    pointCount = legacyPointCount;
 
+    // For LAS 1.4+ there is also a 64-bit point count. Prefer that when present.
+    if (minorVersion >= 4)
+    {
+        uint64_t extendedPointCount(0);
+
+        is.seek(pointCountPos);
+        is >> extendedPointCount;
+
+        pointCount = extendedPointCount ? extendedPointCount
+                                        : static_cast<uint64_t>(legacyPointCount);
+    }
+    else
+    {
+        pointCount = legacyPointCount;
+    }
+
+    // Zero out both legacy and extended point count fields in the header so the
+    // pointless LAS we write is internally consistent (it has no point records).
     os.seek(legacyPointCountPos);
     os << static_cast<uint32_t>(0);
 
